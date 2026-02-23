@@ -33,9 +33,53 @@
 
         .input-focus:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2); }
         .nav-active { background-color: #eef2ff; color: #4338ca; border-right: 4px solid #4338ca; font-weight: 700; }
-        
-        /* Timer bar animation */
-        .timer-progress { transition: width 0.1s linear; }
+
+        /* Video Modal Styles */
+        #video-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(8px);
+        }
+        #video-modal.video-open {
+            display: flex;
+        }
+        #video-container {
+            position: relative;
+            width: 90%;
+            max-width: 900px;
+            background: #000;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5);
+        }
+        #video-container iframe {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 16/9;
+            border-radius: 1rem;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+        #close-video {
+            position: absolute;
+            top: -50px;
+            right: -10px;
+            cursor: pointer;
+            color: white;
+            background: transparent;
+            border: none;
+            padding: 10px;
+            transition: transform 0.2s;
+        }
+        #close-video:hover {
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body class="text-slate-900 leading-relaxed">
@@ -43,91 +87,114 @@
     <!-- TOP BAR -->
     <nav class="bg-white border-b border-slate-200 fixed w-full z-50 top-0 h-16 flex items-center px-4 justify-between shadow-sm">
         <div class="flex items-center gap-4 text-slate-900">
-            <button onclick="toggleSidebar()" class="lg:hidden p-2 hover:bg-slate-100 rounded-lg text-slate-900">
+            <button onclick="toggleSidebar()" class="lg:hidden p-2 hover:bg-slate-100 rounded-lg">
                 <i data-lucide="menu" class="w-6 h-6 text-slate-600"></i>
             </button>
-            <div class="flex items-center gap-2 cursor-pointer text-slate-900" onclick="goHome()">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="goHome()">
                 <div class="bg-indigo-600 p-1.5 rounded-lg text-white">
                     <i data-lucide="graduation-cap" class="w-5 h-5"></i>
                 </div>
                 <span class="font-black text-xl tracking-tighter uppercase italic">MovED</span>
             </div>
-            <div id="breadcrumb" class="hidden md:flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest ml-4 text-slate-900">
+            <div id="breadcrumb" class="hidden md:flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest ml-4">
                 Valg av nivå
             </div>
         </div>
-        <div class="flex items-center gap-3 bg-indigo-50 px-4 py-2 rounded-full border border-indigo-100 text-slate-900">
+        <div class="flex items-center gap-3 bg-indigo-50 px-4 py-2 rounded-full border border-indigo-100">
             <i data-lucide="award" class="w-4 h-4 text-indigo-600"></i>
             <span id="global-score" class="font-black text-indigo-800 text-sm">0</span>
         </div>
     </nav>
 
     <!-- SIDEBAR -->
-    <aside id="sidebar" class="fixed left-0 top-16 h-[calc(100vh-64px)] w-72 bg-white border-r border-slate-200 z-40 sidebar-closed shadow-xl lg:shadow-none overflow-y-auto text-slate-900">
+    <aside id="sidebar" class="fixed left-0 top-16 h-[calc(100vh-64px)] w-72 bg-white border-r border-slate-200 z-40 sidebar-closed shadow-xl lg:shadow-none overflow-y-auto">
         <div class="p-6 space-y-8" id="sidebar-content">
-            <!-- Menyinnhold genereres her -->
+            <!-- Sidebar innhold -->
         </div>
     </aside>
 
     <!-- MAIN CONTENT -->
-    <main id="main-content" class="pt-24 min-h-screen transition-all duration-300 text-slate-900">
+    <main id="main-content" class="pt-24 min-h-screen transition-all duration-300">
         <div id="app" class="max-w-5xl mx-auto px-6 pb-20 text-slate-900">
-            <!-- App-visninger lastes her -->
+            <!-- Innhold -->
         </div>
     </main>
 
+    <!-- VIDEO MODAL -->
+    <div id="video-modal" onclick="closeVideo()">
+        <div id="video-container" onclick="event.stopPropagation()">
+            <button id="close-video" onclick="closeVideo()">
+                <i data-lucide="x-circle" class="w-10 h-10"></i>
+            </button>
+            <iframe id="youtube-video" src="https://www.youtube.com/embed/ECR1RqYYkl4?enablejsapi=1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+    </div>
+
+
     <script>
-        // --- DATASTRUKTURER ---
+        // --- VIDEO PLAYER ---
+        function openVideo() {
+            document.getElementById('video-modal').classList.add('video-open');
+            lucide.createIcons(); // To render the close icon
+        }
+
+        function closeVideo() {
+            document.getElementById('video-modal').classList.remove('video-open');
+            var iframe = document.getElementById('youtube-video');
+            iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+        }
+
+        // --- DATA ---
         const coursesA2 = [
             {
                 id: 'a2-t1', title: 'Synonymer og antonymer', icon: 'languages', color: 'bg-blue-100',
                 grammarTheory: 'Synonymer er ord som betyr nesten det samme, mens antonymer betyr det motsatte. Bruk dette for å variere språket ditt på arbeidsplassen.',
-                text: 'I det norske arbeidslivet bruker vi ofte mange ord som betyr nesten det samme for å skape bedre flyt i språket vårt og unngå kjedelige gjentakelser i hverdagen. For eksempel kan en person som er ansatt i en bedrift kalles både en arbeidstaker og en medarbeider. Sjefen din på arbeidsplassen blir ofte omtalt som din nærmeste leder, og dette er ord som kan brukes om hverandre i daglig tale og i viktige møter. På den andre siden har vi antonymer, som er ord med helt motsatt betydning. Et vanlig eksempel er forskjellen mellom heltid, som betyr at du jobber hundre prosent stilling, og deltid, som betyr at du jobber mindre enn full tid. Å mestre disse nyansene i vokabularet gjør det mye lettere for deg å forstå innholdet i både stillingsannonser og formelle arbeidskontrakter når du søker etter ny jobb i Norge.',
+                text: 'I det norske arbeidslivet bruker vi ofte mange ord som betyr nesten det samme for å skape bedre flyt i språket. For eksempel kan en person som er ansatt i en bedrift kalles både en arbeidstaker og en medarbeider. Sjefen din på arbeidsplassen blir ofte omtalt som din nærmeste leder. På den andre siden har vi antonymer, som er ord med helt motsatt betydning. Et vanlig eksempel er forskjellen mellom heltid, som betyr at du jobber hundre prosent, og deltid, som betyr at du jobber mindre enn full stilling. Å mestre disse nyansene gjør det mye lettere for deg å forstå innholdet i både stillingsannonser og formelle arbeidskontrakter når du søker etter ny jobb i Norge.',
                 tasks: [
-                    { type: 'choice', q: 'Finn et synonym for "leder":', options: ['Sjef', 'Ansatt', 'Vikar'], correct: 0 },
-                    { type: 'choice', q: 'Hva er det motsatte av "heltid"?', options: ['Fast jobb', 'Deltid', 'Overtid'], correct: 1 },
-                    { type: 'choice', q: 'Hvilket ord betyr det samme som "ansatt"?', options: ['Arbeidsgiver', 'Arbeidstaker', 'Kunde'], correct: 1 },
-                    { type: 'tf', q: '"Lønn" og "inntekt" kan ofte brukes som synonymer.', answer: true },
+                    { type: 'choice', q: 'Hvilket ord er et synonym for "leder"?', options: ['Sjef', 'Ansatt', 'Lærling'], correct: 0 },
+                    { type: 'choice', q: 'Hva er antonymet til "heltid"?', options: ['Fast jobb', 'Deltid', 'Overtid'], correct: 1 },
+                    { type: 'choice', q: 'Hva kalles en person som jobber i en bedrift?', options: ['Arbeidsgiver', 'Arbeidstaker', 'Kunde'], correct: 1 },
+                    { type: 'tf', q: 'Ordet "lønn" betyr det samme som "inntekt" i denne sammenhengen.', answer: true },
                     { type: 'blank', text: 'Når man slutter å jobbe fordi man er blitt gammel, får man [blank].', answer: 'pensjon' }
                 ]
             },
             {
                 id: 'a2-t2', title: 'Viktige begreper', icon: 'book-open', color: 'bg-emerald-100',
-                text: 'For å trives og lykkes i det norske arbeidslivet er det helt nødvendig å kjenne de formelle rammene og de tekniske begrepene som brukes daglig. Arbeidsgiver er navnet på firmaet eller personen du har inngått en juridisk avtale med. Denne motparten har plikt til å gi deg relevante arbeidsoppgaver og utbetale lønn til avtalt tid hver eneste måned. Før du begynner i en ny jobb, skal du alltid motta og signere en skriftlig arbeidskontrakt. Denne viktige kontrakten inneholder detaljert informasjon om din arbeidstid, lønn, oppsigelsestid og dine rettigheter som ansatt. Hvis du jobber mer enn det som er avtalt i kontrakten din, kalles det overtid, og dette skal normalt kompenseres med ekstra betaling eller mulighet for avspasering senere. Ved sykdom bruker man ofte egenmelding eller sykemelding fra lege.',
+                text: 'For å trives og lykkes i det norske arbeidslivet er det helt nødvendig å kjenne de formelle rammene og begrepene som brukes daglig. Arbeidsgiver er navnet på firmaet eller personen du har inngått en juridisk avtale med. Denne motparten har plikt til å gi deg relevante arbeidsoppgaver og utbetale lønn til avtalt tid hver eneste måned. Før du begynner i en ny jobb, skal du alltid motta og signere en skriftlig arbeidskontrakt. Denne viktige kontrakten inneholder detaljert informasjon om din arbeidstid, lønn og dine rettigheter som ansatt. Hvis du jobber mer enn det som er avtalt i kontrakten din, kalles det overtid, og dette skal normalt kompenseres med ekstra betaling eller mulighet for avspasering senere. Ved sykdom bruker man egenmelding.',
                 tasks: [
                     { type: 'drag-words', q: 'Koble ord til riktig forklaring:', pairs: [{ word: 'Overtid', def: 'Jobbe mer enn avtalt' }, { word: 'Egenmelding', def: 'Melding om sykdom' }, { word: 'Fagforening', def: 'Hjelper arbeidere' }]},
-                    { type: 'tf', q: 'En arbeidskontrakt kan være muntlig i Norge.', answer: false },
-                    { type: 'choice', q: 'Hvem har hovedansvaret for å betale ut lønn?', options: ['Kollegaen', 'Arbeidsgiveren', 'Banken'], correct: 1 },
-                    { type: 'blank', text: 'En person som jobber midlertidig for en annen kalles en [blank].', answer: 'vikar' },
+                    { type: 'tf', q: 'En arbeidskontrakt må alltid være skriftlig i Norge.', answer: true },
+                    { type: 'choice', q: 'Hvem har hovedansvaret for å utbetale lønn?', options: ['Kollegaen', 'Arbeidsgiveren', 'Banken'], correct: 1 },
+                    { type: 'blank', text: 'En person som jobber i en kort periode for en annen kalles en [blank].', answer: 'vikar' },
                     { type: 'choice', q: 'Hvor mange dager kan man vanligvis bruke egenmelding før legeattest?', options: ['1 dag', '3 dager', '14 dager'], correct: 1 }
                 ]
             },
             {
                 id: 'a2-t3', title: 'Ferieloven', icon: 'palmtree', color: 'bg-orange-100',
-                text: 'Ferieloven i Norge er laget for å sikre at alle arbeidstakere får årlig fritid til nødvendig hvile og rekreasjon i en hektisk hverdag. I henhold til loven har du krav på minst 25 virkedager ferie hvert eneste år. Siden lørdager regnes som virkedager etter lovens offisielle definisjon, tilsvarer dette i praksis fire uker og en dag med ferie for de fleste ansatte i norske bedrifter. Mange bedrifter har i tillegg inngått tariffavtaler som gir de ansatte en femte ferieuke hvert år. Det er viktig å merke seg at du normalt ikke får din vanlige månedslønn mens du har ferie. I stedet mottar du feriepenger som er tjent opp tidligere. Disse pengene blir spart opp av arbeidsgiveren din året før du faktisk tar ut ferien. Feriepengene utgjør som regel minst 10,2 prosent av fjorårets bruttoinntekt, noe som sikrer økonomisk trygghet i ferien.',
+                text: 'Ferieloven i Norge er laget for å sikre at alle arbeidstakere får årlig fritid til nødvendig hvile og rekreasjon i en hektisk hverdag. I henhold til loven har du krav på minst 25 virkedager ferie hvert eneste år. Siden lørdager regnes som virkedager etter lovens offisielle definisjon, tilsvarer dette i praksis fire uker og en dag med ferie. Mange norske bedrifter har i tillegg inngått tariffavtaler som gir de ansatte en femte ferieuke hvert år. Det er viktig å merke seg at du normalt ikke får din vanlige månedslønn mens du har ferie. I stedet mottar du feriepenger. Disse pengene blir spart opp av arbeidsgiveren din året før du faktisk tar ut ferien. Feriepengene utgjør som regel minst ti prosent av fjorårets inntekt.',
                 tasks: [
-                    { type: 'choice', q: 'Hvor mange dager ferie gir loven minimum?', options: ['21', '25', '30'], correct: 1 },
-                    { type: 'tf', q: 'Du får vanlig lønn mens du er på ferie.', answer: false },
-                    { type: 'blank', text: 'Pengene man mottar under ferie kalles ferie[blank].', answer: 'penger' },
+                    { type: 'choice', q: 'Hvor mange virkedager ferie gir loven som et minimum?', options: ['21', '25', '30'], correct: 1 },
+                    { type: 'tf', q: 'Du får vanlig månedslønn mens du er på ferie.', answer: false },
+                    { type: 'blank', text: 'Pengene man mottar i stedet for lønn under ferie kalles [blank].', answer: 'feriepenger' },
                     { type: 'choice', q: 'Når tjener man opp feriepengene man bruker i år?', options: ['I år', 'I fjor', 'Neste år'], correct: 1 },
-                    { type: 'choice', q: 'Hvor mange uker ferie har de fleste med tariffavtaler?', options: ['3 uker', '4 uker', '5 uker'], correct: 2 }
+                    { type: 'choice', q: 'Hvor mange uker ferie har de fleste gjennom tariffavtaler?', options: ['3 uker', '4 uker', '5 uker'], correct: 2 }
                 ]
             },
             {
                 id: 'a2-t4', title: 'Vikar og permisjon', icon: 'user-plus', color: 'bg-purple-100',
-                text: 'Noen ganger trenger bedrifter folk for en kortere periode. En vikar er en person som blir ansatt for å jobbe midlertidig i stedet for en annen ansatt som for eksempel er syk eller har permisjon. Permisjon betyr at du har fått innvilget fri fra jobben din i en bestemt periode av ulike legitime årsaker som utdanning eller omsorg for familie. Det finnes mange typer permisjoner i Norge som er godt regulert gjennom det norske lovverket. Foreldrepermisjon er svært vanlig når man får barn, og denne perioden blir ofte dekket økonomisk av staten via NAV. Andre typer, som for eksempel utdanningspermisjon, kan ofte være uten lønn. Hvis du har behov for fri pga. begravelse eller flytting, kan du søke din leder om velferdspermisjon for en dag eller to for å få hverdagen til å gå opp.',
+                text: 'Noen ganger oppstår det spesielle situasjoner der bedrifter trenger ekstra arbeidskraft for en kortere periode. En vikar er en person som blir ansatt for å jobbe i stedet for en annen ansatt som for eksempel er syk, har ferie eller har gyldig permisjon. Permisjon betyr at du har fått innvilget fri fra jobben din i en bestemt periode av ulike årsaker. Det finnes mange typer permisjoner i Norge. Foreldrepermisjon er svært vanlig når man får barn, og denne perioden blir ofte dekket økonomisk av staten via NAV. Andre typer, som for eksempel utdanningspermisjon, kan ofte være uten lønn. Hvis du har behov for fri pga. begravelse eller flytting, kan du søke din leder om velferdspermisjon for en dag eller to.',
                 tasks: [
-                    { type: 'blank', text: 'En person som jobber midlertidig for en annen kalles en [blank].', answer: 'vikar' },
+                    { type: 'blank', text: 'En person som jobber midlertidig for en annen ansatt kalles en [blank].', answer: 'vikar' },
                     { type: 'choice', q: 'Hva kalles det når man har fått fri fra jobb i en periode?', options: ['Oppsigelse', 'Permisjon', 'Overtid'], correct: 1 },
                     { type: 'tf', q: 'NAV betaler ofte foreldrepenger under en foreldrepermisjon.', answer: true },
-                    { type: 'choice', q: 'Hvordan bør du normalt søke om en permisjon?', options: ['Skriftlig', 'Muntlig', 'Via telefon'], correct: 0 },
+                    { type: 'choice', q: 'Hvordan bør du normalt søke om en lengre permisjon?', options: ['Skriftlig', 'Muntlig', 'Via telefon'], correct: 0 },
                     { type: 'choice', q: 'Hva kalles fri pga. flytting eller begravelse?', options: ['Ferie', 'Velferdspermisjon', 'Sykemelding'], correct: 1 }
                 ]
             },
             {
                 id: 'a2-t5', title: 'Substantivbøyning', icon: 'type', color: 'bg-pink-100',
-                grammarTheory: 'Substantiv bøyes i entall og flertall. En kontrakt (ubestemt) -> kontrakten (bestemt).',
-                text: 'På en travel arbeidsplass bruker vi hver dag mange forskjellige substantiv for å beskrive oppgaver, utstyr og avtaler. Det er viktig å kunne bøye disse ordene riktig for å unngå misforståelser i samtalen med kolleger og kunder. Når du snakker om en helt spesifikk avtale som du og sjefen akkurat har lest gjennom, må du bruke bestemt form: "Kontrakten er klar til signering". Hvis du derimot snakker generelt om regler for alle bedrifter, bruker du ubestemt form: "Alle firmaer trenger en skriftlig kontrakt". Vi bøyer også tidsord som en time, en dag, en uke og en måned når vi planlegger prosjekter sammen. En vanlig norsk arbeidsuke består som regel av fem arbeidsdager, og god bøyning av yrkesord gjør kommunikasjonen din profesjonell og tydelig for alle involverte parter.',
+                grammarTheory: 'Substantiv bøyes i entall og flertall. En kontrakt (ubestemt) -> kontrakten (bestemt). Kontrakter (ubestemt flertall) -> kontraktene (bestemt flertall).',
+                text: 'På en travel arbeidsplass bruker vi hver dag mange forskjellige substantiv for å beskrive oppgaver og utstyr. Det er viktig å kunne bøye disse ordene riktig for å unngå misforståelser i samtalen med kolleger. Når du snakker om en helt spesifikk avtale som du og sjefen akkurat har lest gjennom, må du bruke bestemt form: "Kontrakten er klar til signering". Hvis du derimot snakker generelt om regler for alle bedrifter, bruker du ubestemt form: "Alle firmaer trenger en skriftlig kontrakt". Vi bøyer også tidsord som en time, en dag, en uke og en måned når vi planlegger prosjekter. En vanlig norsk arbeidsuke består som regel av fem arbeidsdager, og god bøyning gjør kommunikasjonen din profesjonell.',
                 tasks: [
                     { type: 'blank', text: 'Vi må signere [blank] (bestemt form av "en kontrakt") nå.', answer: 'kontrakten' },
                     { type: 'blank', text: 'Sjefen har snakket med alle de [blank] (bestemt flertall av "en ansatt").', answer: 'ansatte' },
@@ -138,8 +205,8 @@
             },
             {
                 id: 'a2-t6', title: 'V2-regelen', icon: 'zap', color: 'bg-yellow-100',
-                grammarTheory: 'V2-regelen betyr at verbet alltid skal stå på plass nummer to i en fortellende helsetning.',
-                text: 'Riktig ordstilling er kanskje den viktigste faktoren for å bli forstått korrekt når du snakker norsk på jobb med kunder eller ledere. Den mest sentrale regelen kaller vi V2-regelen. Denne regelen sier at i en vanlig fortellende helsetning skal det bøyde verbet alltid stå som det andre leddet i setningen. Hvis du starter setningen med subjektet, kommer verbet rett etterpå: "Jeg jobber i dag". Men hvis du velger å starte setningen med tid eller sted for å variere språket, må du bytte plass på subjekt og verb: "I dag jobber jeg". Dette gjelder også når vi bruker små ord som "nå", "kanskje" og "derfor". Riktig bruk av V2-regelen gir deg mer autoritet og bedre flyt i samtalen med dine kolleger, noe som er spesielt viktig i profesjonelle sammenhenger på kontoret.',
+                grammarTheory: 'V2-regelen betyr at verbet (gjøre-ordet) alltid skal stå på plass nummer to i en vanlig fortellende setning.',
+                text: 'Riktig ordstilling er kanskje den viktigste faktoren for å bli forstått korrekt når du snakker norsk på jobb. Den mest sentrale regelen kaller vi V2-regelen. Denne regelen sier at i en vanlig fortellende setning skal det bøyde verbet alltid stå som det andre leddet i setningen. Hvis du starter setningen med subjektet, kommer verbet rett etterpå: "Jeg jobber i dag". Men hvis du velger å starte setningen med tid eller sted for å variere språket, må du bytte plass på subjekt og verb: "I dag jobber jeg". Dette gjelder også når vi bruker små ord som "nå", "kanskje" og "derfor". Riktig bruk av V2-regelen gir deg mer autoritet og bedre flyt i samtalen med dine ledere og kolleger.',
                 tasks: [
                     { type: 'sort-words', q: 'Sett ordene i riktig rekkefølge:', sentence: ['I', 'dag', 'skriver', 'jeg', 'kontrakten.'], shuffled: ['skriver', 'jeg', 'I', 'dag', 'kontrakten.'] },
                     { type: 'choice', q: 'Hvilken av disse setningene er korrekt?', options: ['Nå jeg starter.', 'Nå starter jeg.', 'Jeg nå starter.'], correct: 1 },
@@ -150,46 +217,46 @@
             },
             {
                 id: 'a2-t7', title: 'Oppsigelse', icon: 'log-out', color: 'bg-red-100',
-                text: 'En oppsigelse er en formell og skriftlig beskjed om at et arbeidsforhold skal avsluttes for godt. Enten kan du velge å si opp stillingen din selv hvis du får ny jobb, eller så kan arbeidsgiveren din velge å si deg opp på grunn av ulike årsaker i bedriften som nedbemanning. En oppsigelse skal alltid leveres skriftlig for å være juridisk gyldig etter norsk lov. Når en av partene leverer oppsigelsen, starter en periode som vi kaller for oppsigelsestid. I denne perioden har du både plikt til å jobbe som vanlig og rett til å motta lønn frem til selve sluttdatoen i kontrakten. Vanlig oppsigelsestid i faste stillinger er mellom en og tre måneder, men i en prøvetid er den ofte kortere, for eksempel 14 dager eller fire uker, avhengig av hva som er skrevet i den opprinnelige avtalen.',
+                text: 'En oppsigelse er en formell og skriftlig beskjed om at et arbeidsforhold skal avsluttes for godt. Enten kan du velge å si opp stillingen din selv, eller så kan arbeidsgiveren din velge å si deg opp på grunn av ulike årsaker i bedriften. En oppsigelse skal alltid leveres skriftlig for å være juridisk gyldig etter norsk lov. Når en av partene leverer oppsigelsen, starter en periode som vi kaller for oppsigelsestid. I denne perioden har du både plikt til å jobbe som vanlig og rett til å motta lønn frem til selve sluttdatoen. Vanlig oppsigelsestid i faste stillinger er mellom en og tre måneder, men i en prøvetid er den ofte kortere, for eksempel 14 dager eller fire uker.',
                 tasks: [
                     { type: 'tf', q: 'Du kan si opp jobben din ved å sende en SMS til sjefen.', answer: false },
                     { type: 'blank', text: 'Tiden fra du sier opp til du faktisk slutter kalles [blank].', answer: 'oppsigelsestid' },
                     { type: 'choice', q: 'Hvor lang er vanligvis oppsigelsestiden i en fast jobb?', options: ['1 uke', '1-3 måneder', '1 år'], correct: 1 },
-                    { type: 'choice', q: 'Hva må en oppsigelse være for å regnes som gyldig?', options: ['Muntlig', 'Skriftlig', 'Hemmelig'], correct: 1 },
-                    { type: 'choice', q: 'Hva må du gjøre i oppsigelsestiden din?', options: ['Ta fri med en gang', 'Jobbe som vanlig', 'Slutte å få betalt'], correct: 1 }
+                    { type: 'choice', q: 'Hva må en oppsigelse være for å regnes som gyldig?', options: ['Muntlig', 'Skriftlig', 'En hemmelighet'], correct: 1 },
+                    { type: 'choice', q: 'Hva må du gjøre i oppsigelsestiden din?', options: ['Ta ferie med en gang', 'Jobbe som vanlig', 'Slutte å få betalt'], correct: 1 }
                 ]
             },
             {
                 id: 'a2-t8', title: 'Lønnsslipp', icon: 'banknote', color: 'bg-indigo-100',
-                text: 'Hver eneste måned mottar du en lønnsslipp fra arbeidsgiveren din, enten digitalt i et system eller på papir. Dette dokumentet er svært viktig for at du skal kunne kontrollere at du faktisk har fått utbetalt riktig beløp for jobben du har utført i løpet av måneden. Lønnsslippen viser alltid to forskjellige beløp: Bruttolønn og nettolønn. Bruttolønn er det totale beløpet du har tjent før skatten blir trukket fra. Nettolønn er det beløpet som faktisk blir overført til din personlige bankkonto etter at alle trekk er gjort. Dokumentet viser også nøyaktig hvor mye skatt arbeidsgiveren har trukket og sendt videre til Skatteetaten på dine vegne. Du bør lagre alle lønnsslippene dine som dokumentasjon på inntekt, for eksempel hvis du skal søke om banklån for å kjøpe din egen bolig i fremtiden.',
+                text: 'Hver eneste måned mottar du en lønnsslipp fra arbeidsgiveren din, enten digitalt i et system eller på papir. Dette dokumentet er svært viktig for at du skal kunne kontrollere at du faktisk har fått utbetalt riktig beløp for jobben du har gjort. Lønnsslippen viser alltid to forskjellige beløp: Bruttolønn og nettolønn. Bruttolønn er det totale beløpet du har tjent før skatten blir trukket fra. Nettolønn er det beløpet som faktisk blir overført til din personlige bankkonto etter at alle trekk er gjort. Dokumentet viser også nøyaktig hvor mye skatt arbeidsgiveren har trukket og sendt videre til Skatteetaten på dine vegne. Du bør lagre alle lønnsslippene dine som dokumentasjon på inntekt, for eksempel hvis du skal søke om banklån.',
                 tasks: [
-                    { type: 'choice', q: 'Hva er bruttolønn?', options: ['Lønn etter skatt', 'Lønn før skatt', 'Feriepenger'], correct: 1 },
-                    { type: 'choice', q: 'Hva kalles beløpet du faktisk får på konto?', options: ['Brutto', 'Netto', 'Skattetrekk'], correct: 1 },
-                    { type: 'tf', q: 'Lønnsslippen viser hvor mye skatt du betaler.', answer: true },
+                    { type: 'choice', q: 'Hva er definisjonen på bruttolønn?', options: ['Lønn etter skatt', 'Lønn før skatt', 'Feriepenger'], correct: 1 },
+                    { type: 'choice', q: 'Hva kalles det beløpet du faktisk får inn på konto?', options: ['Brutto', 'Netto', 'Skattetrekk'], correct: 1 },
+                    { type: 'tf', q: 'Lønnsslippen din viser hvor mye skatt du betaler hver måned.', answer: true },
                     { type: 'blank', text: 'Lønn før skatt er trukket fra kalles [blank].', answer: 'brutto' },
-                    { type: 'choice', q: 'Hvorfor bør man spare på lønnsslippene?', options: ['Pga. rabatt', 'Dokumentasjon på inntekt', 'Det er reklame'], correct: 1 }
+                    { type: 'choice', q: 'Hvorfor er det lurt å ta vare på lønnsslippene?', options: ['For å få rabatt', 'Dokumentasjon på inntekt', 'Det er reklame'], correct: 1 }
                 ]
             },
             {
                 id: 'a2-t9', title: 'Arbeidsmiljø', icon: 'smile', color: 'bg-cyan-100',
-                text: 'Et godt arbeidsmiljø handler om både den fysiske sikkerheten på plassen og hvordan de ansatte trives sammen i hverdagen. I det norske arbeidslivet er det et stort fokus på verdier som samarbeid, åpenhet og likeverd mellom alle kolleger uansett bakgrunn eller stilling. Dette betyr at alle ansatte skal føle seg trygge, inkluderte og respekterte hver dag de er på jobb. God kommunikasjon og gjensidig respekt er nøkkelen til et velfungerende team på enhver arbeidsplass. Hvis det oppstår utfordringer eller konflikter, er det vanlig praksis å snakke åpent om dette med lederen eller en tillitsvalgt med en gang det skjer. Et sunt arbeidsmiljø fører til lavere sykefravær og økt motivasjon for alle involverte parter. Du har selv et personlig ansvar for å bidra til den gode stemningen.',
+                text: 'Et godt arbeidsmiljø handler om både den fysiske sikkerheten på plassen og hvordan de ansatte trives sammen i hverdagen. I det norske arbeidslivet er det et stort fokus på verdier som samarbeid, åpenhet og likeverd mellom alle ansatte. Dette betyr at alle ansatte skal føle seg trygge, inkluderte og respekterte, uansett hvilken tittel eller rolle de har i firmaet. God kommunikasjon og gjensidig respekt er nøkkelen til et velfungerende team. Hvis det oppstår utfordringer eller konflikter, er det vanlig praksis å snakke åpent om dette med lederen eller en tillitsvalgt. Et sunt arbeidsmiljø fører til lavere sykefravær og økt motivasjon for alle involverte parter. Du har selv et personlig ansvar for å bidra positivt.',
                 tasks: [
                     { type: 'choice', q: 'Hva regnes som viktigst for et godt arbeidsmiljø?', options: ['Konkurranse', 'Samarbeid og trivsel', 'Å jobbe alene'], correct: 1 },
-                    { type: 'tf', q: 'Arbeidsmiljø handler bare om fysisk sikkerhet.', answer: false },
-                    { type: 'choice', q: 'Hva bør du gjøre hvis du opplever utfordringer?', options: ['Slutte', 'Snakke med leder eller tillitsvalgt', 'Tie stille'], correct: 1 },
-                    { type: 'blank', text: 'God [blank] forebygger konflikter.', answer: 'kommunikasjon' },
-                    { type: 'choice', q: 'Hvem har ansvaret for miljøet?', options: ['Bare sjefen', 'Bare ansatte', 'Både ledelsen og ansatte'], correct: 2 }
+                    { type: 'tf', q: 'Arbeidsmiljø handler utelukkende om fysisk sikkerhet.', answer: false },
+                    { type: 'choice', q: 'Hva bør du gjøre hvis du opplever utfordringer på jobb?', options: ['Si opp med en gang', 'Snakke med leder eller tillitsvalgt', 'Tie stille'], correct: 1 },
+                    { type: 'blank', text: 'God [blank] er viktig for å forebygge konflikter.', answer: 'kommunikasjon' },
+                    { type: 'choice', q: 'Hvem har ansvaret for å skape et godt miljø?', options: ['Bare sjefen', 'Bare ansatte', 'Både ledelsen og ansatte'], correct: 2 }
                 ]
             },
             {
                 id: 'a2-t10', title: 'Rett og plikt', icon: 'shield-check', color: 'bg-slate-200',
-                text: 'Som en aktiv arbeidstaker i det norske samfunnet har du mange lovfestede rettigheter, men du har også viktige plikter du må overholde overfor din bedrift hver eneste dag. En av de mest sentrale pliktene er å være lojal mot den bedriften du jobber i. Dette innebærer at du alltid skal gjøre ditt beste i oppgavene dine, møte presis til avtalt tid og følge de interne reglene som er satt på arbeidsplassen din. Ærlighet er en verdi som blir satt svært høyt i Norge. Hvis du skulle gjøre en feil, er det best å si ifra med en gang slik at man kan finne en god løsning sammen. Ved å være en pålitelig, hjelpsom og punktlig kollega, bygger du opp et godt rykte som vil hjelpe deg videre i karrieren din over lang tid og gi deg mange nye muligheter i fremtiden.',
+                text: 'Som en aktiv arbeidstaker i det norske samfunnet har du mange lovfestede rettigheter, men du har også viktige plikter du må overholde overfor din bedrift. En av de mest sentrale pliktene er å være lojal mot den bedriften du jobber i. Dette innebærer at du alltid skal gjøre ditt beste, møte presis til avtalt tid og følge de interne reglene som er satt på arbeidsplassen din. Ærlighet er en verdi som blir satt svært høyt i Norge. Hvis du skulle gjøre en feil, er det best å si ifra med en gang slik at man kan finne en god løsning sammen. Ved å være en pålitelig, hjelpsom og punktlig kollega, bygger du opp et godt rykte som vil hjelpe deg videre i karrieren din over lang tid.',
                 tasks: [
-                    { type: 'choice', q: 'Hva regnes som en plikt for deg på jobben?', options: ['Å få mat', 'Å møte presis', 'Å ha ferie'], correct: 1 },
-                    { type: 'tf', q: 'Lojalitet betyr å støtte bedriften sin.', answer: true },
-                    { type: 'choice', q: 'Hva betyr ærlighet på jobb?', options: ['Å ta ting', 'Å snakke sant om feil', 'Å sove'], correct: 1 },
+                    { type: 'choice', q: 'Hva regnes som en plikt for deg på jobben?', options: ['Å få gratis mat', 'Å møte presis', 'Å ha ferie'], correct: 1 },
+                    { type: 'tf', q: 'Lojalitet betyr å støtte bedriften man jobber i.', answer: true },
+                    { type: 'choice', q: 'Hva innebærer ærlighet på en arbeidsplass?', options: ['Å ta med ting hjem', 'Å snakke sant om egne feil', 'Å sove i pausen'], correct: 1 },
                     { type: 'blank', text: 'Som ansatt har man både rettigheter og [blank].', answer: 'plikter' },
-                    { type: 'choice', q: 'Hva bygger du ved å være en god kollega?', options: ['Et rykte', 'Et hus', 'En bil'], correct: 0 }
+                    { type: 'choice', q: 'Hva oppnår du ved å være en god og pålitelig kollega?', options: ['Et godt rykte', 'Et nytt hus', 'En raskere bil'], correct: 0 }
                 ]
             }
         ];
@@ -197,118 +264,118 @@
         const coursesB1 = [
             {
                 id: 'b1-t1', title: 'IA-avtalen', icon: 'users', color: 'bg-blue-200',
-                text: 'Inkluderende arbeidsliv, ofte forkortet til IA, er et organisert samarbeid som har som formål å gjøre det mulig for alle som har arbeidsevne, å delta aktivt i arbeidslivet i Norge. Hovedmålene med den nasjonale IA-avtalen er å forebygge sykefravær og hindre at mennesker faller permanent utenfor arbeidsmarkedet på grunn av helseutfordringer eller alder. Alle norske arbeidsgivere har en lovpålagt tilretteleggingsplikt overfor sine ansatte. Dette innebærer at dersom en ansatt får helseutfordringer, må lederen forsøke å tilpasse både arbeidsoppgavene og utstyret slik at vedkommende kan fortsette å jobbe på en verdig måte. IA handler også om å inkludere mennesker med ulik kulturell bakgrunn, ulike funksjonsevner og i alle aldre, da et mangfoldig miljø ofte blir sett på som en stor styrke for hele bedriftens utvikling.',
+                text: 'Inkluderende arbeidsliv, ofte forkortet til IA, er et organisert samarbeid som har som formål å gjøre det mulig for alle som har arbeidsevne, å delta aktivt i arbeidslivet. Hovedmålene med den nasjonale IA-avtalen er å forebygge sykefravær og hindre at mennesker faller permanent utenfor arbeidsmarkedet. Alle norske arbeidsgivere har en lovpålagt tilretteleggingsplikt overfor sine ansatte. Dette innebærer at dersom en ansatt får helseutfordringer, må lederen forsøke å tilpasse både arbeidsoppgavene og utstyret slik at vedkommende kan fortsette å jobbe. IA handler også om å inkludere mennesker med ulik kulturell bakgrunn, ulike funksjonsevner og i alle aldre, da et mangfoldig miljø ofte blir sett på som en stor styrke for hele bedriften.',
                 tasks: [
                     { type: 'choice', q: 'Hva er et av hovedmålene med IA-avtalen?', options: ['Høyere lønn', 'Forebygge sykefravær', 'Kortere uker'], correct: 1 },
                     { type: 'choice', q: 'Hva betyr begrepet tilrettelegging i denne sammenhengen?', options: ['Å få mer kaffe', 'Å tilpasse jobben til den ansatte', 'Å gi alle sparken'], correct: 1 },
                     { type: 'tf', q: 'IA-avtalen har som mål å hindre diskriminering på arbeidsplassen.', answer: true },
-                    { type: 'blank', text: 'IA står for [blank] arbeidsliv.', answer: 'inkluderende' },
-                    { type: 'choice', q: 'Hva er den største fordelen med mangfold ifølge teksten?', options: ['Det er dyrt', 'Det styrker bedriften', 'Det gir pauser'], correct: 1 }
+                    { type: 'blank', text: 'IA er en forkortelse for [blank] arbeidsliv.', answer: 'inkluderende' },
+                    { type: 'choice', q: 'Hva er den største fordelen med mangfold ifølge teksten?', options: ['Det er dyrt', 'Det styrker bedriften', 'Det gir flere pauser'], correct: 1 }
                 ]
             },
             {
                 id: 'b1-t2', title: 'Tariff og streik', icon: 'building-2', color: 'bg-orange-200',
-                text: 'En tariffavtale er en kollektiv og skriftlig avtale inngått mellom en fagforening og en arbeidsgiverforening. Denne avtalen fastsetter viktige vilkår som for eksempel minstelønn, normal arbeidstid og rett til ferie for en hel bransje eller sektor. Med faste mellomrom gjennomføres det lønnsforhandlinger mellom partene i arbeidslivet. Dersom partene ikke klarer å bli enige gjennom forhandlinger, kan det oppstå en arbeidskonflikt. Ansatte kan da velge å gå ut i streik, som betyr at de stopper alt arbeid for å legge press på arbeidsgiveren. Arbeidsgiveren kan på sin side svare med en lockout, som betyr at de ansatte stenges ute fra arbeidsplassen og mister lønn i perioden. I slike krevende situasjoner må Riksmekleren ofte gripe inn for å hjelpe partene med å finne et kompromiss som begge kan leve med over tid.',
+                text: 'En tariffavtale er en kollektiv og skriftlig avtale inngått mellom en fagforening og en arbeidsgiverforening. Denne avtalen fastsetter viktige vilkår som for eksempel minstelønn, normal arbeidstid og rett til ferie for en hel bransje. Med faste mellomrom gjennomføres det lønnsforhandlinger mellom partene. Dersom partene ikke klarer å bli enige, kan det oppstå en arbeidskonflikt. Ansatte kan da velge å gå ut i streik, som betyr at de stopper alt arbeid for å legge press på arbeidsgiveren. Arbeidsgiveren kan på sin side svare med en lockout, som betyr at de ansatte stenges ute fra arbeidsplassen. I slike krevende situasjoner må Riksmekleren ofte gripe inn for å hjelpe partene med å finne et kompromiss som begge kan leve med over tid.',
                 tasks: [
                     { type: 'choice', q: 'Hva innebærer begrepet lockout?', options: ['De ansatte streiker', 'Arbeidsgiver stenger dørene', 'Alle får lønnsøkning'], correct: 1 },
-                    { type: 'tf', q: 'Streik er lovlig bare i bestemte perioder.', answer: true },
+                    { type: 'tf', q: 'Streik er lovlig bare i spesifikke forhandlingsperioder.', answer: true },
                     { type: 'drag-words', q: 'Koble de riktige begrepene:', pairs: [
                         { word: 'Streik', def: 'Ansatte stopper jobben' },
                         { word: 'Lockout', def: 'Sjefen stenger døra' },
                         { word: 'Tariff', def: 'Felles avtale om vilkår' }
                     ]},
                     { type: 'blank', text: 'En person som bistår partene i uenighet kalles [blank].', answer: 'riksmekleren' },
-                    { type: 'choice', q: 'Hva bestemmer en tariffavtale?', options: ['Været', 'Lønn og arbeidstid', 'TV-program'], correct: 1 }
+                    { type: 'choice', q: 'Hva er hovedformålet med en tariffavtale?', options: ['Å melde været', 'Å bestemme lønn og arbeidstid', 'Å lage TV-program'], correct: 1 }
                 ]
             },
             {
                 id: 'b1-t3', title: 'Permittering', icon: 'clock-4', color: 'bg-emerald-200',
-                text: 'Permittering er en spesiell situasjon der arbeidsgiveren din midlertidig fritar deg for din plikt til å utføre arbeid for bedriften. Dette skjer ofte i tider med økonomisk krise, mangel på nye ordrer eller andre uforutsette hendelser som rammer bedriftens daglige drift. Det er viktig å forstå at ved permittering er du fortsatt formelt ansatt i bedriften, og du har rett til å komme tilbake til din opprinnelige stilling så snart situasjonen har bedret seg. Du mottar som regel ikke lønn fra din arbeidsgiver under selve permitteringen etter en kort lovbestemt periode. I stedet må du søke om dagpenger fra NAV. Dagpenger er en økonomisk stønad som er ment å erstatte deler av din tapte inntekt mens permitteringen varer. Dette skiller seg fundamentalt fra en ordinær oppsigelse, som representerer en permanent avslutning på arbeidsforholdet mellom deg og bedriften.',
+                text: 'Permittering er en spesiell situasjon der arbeidsgiveren din midlertidig fritar deg for din plikt til å utføre arbeid. Dette skjer ofte i tider med økonomisk krise, mangel på nye ordrer eller andre uforutsette hendelser som rammer bedriften. Det er viktig å forstå at ved permittering er du fortsatt formelt ansatt i bedriften, og du har rett til å komme tilbake til din stilling så snart situasjonen har bedret seg. Du mottar som regel ikke lønn fra din arbeidsgiver under permitteringen etter en kort periode. I stedet må du søke om dagpenger fra NAV. Dagpenger er en økonomisk stønad som er ment å erstatte deler av din tapte inntekt. Dette skiller seg fra en ordinær oppsigelse, som representerer en permanent avslutning på arbeidsforholdet mellom partene.',
                 tasks: [
                     { type: 'tf', q: 'Permittering fungerer på nøyaktig samme måte som en oppsigelse.', answer: false },
-                    { type: 'choice', q: 'Hvem utbetaler penger ved permittering?', options: ['Sjefen', 'NAV', 'Banken'], correct: 1 },
-                    { type: 'blank', text: 'Permittering er en [blank] ordning.', answer: 'midlertidig' },
-                    { type: 'choice', q: 'Hva kalles den økonomiske støtten fra NAV?', options: ['Månedslønn', 'Dagpenger', 'Studielån'], correct: 1 },
-                    { type: 'choice', q: 'Er du fortsatt ansatt når du er permittert?', options: ['Nei', 'Ja', 'Bare kanskje'], correct: 1 }
+                    { type: 'choice', q: 'Hvem utbetaler penger til deg under selve permitteringen?', options: ['Sjefen i firmaet', 'NAV', 'Din lokale bank'], correct: 1 },
+                    { type: 'blank', text: 'Permittering regnes alltid som en [blank] ordning.', answer: 'midlertidig' },
+                    { type: 'choice', q: 'Hva kalles den økonomiske støtten du får fra NAV?', options: ['Månedslønn', 'Dagpenger', 'Studielån'], correct: 1 },
+                    { type: 'choice', q: 'Beholder du jobben din selv om du er permittert?', options: ['Nei, du er ferdig', 'Ja, du er fortsatt ansatt', 'Bare hvis du vil'], correct: 1 }
                 ]
             },
             {
                 id: 'b1-t4', title: 'Tillitsvalgt', icon: 'user-check', color: 'bg-slate-200',
-                text: 'En tillitsvalgt fungerer som de ansattes valgte talsmann og representant på arbeidsplassen i hverdagen. Vedkommende blir valgt demokratisk av de ansatte som er organiserte medlemmer i en fagforening. Den tillitsvalgte har en meget sentral rolle i den løpende dialogen med bedriftens ledelse og deltar aktivt i forhandlinger som gjelder både lønn og generelle arbeidsvilkår. Dersom du som ansatt opplever problemer eller urettferdighet på jobben, som for eksempel diskriminering eller usaklig behandling, kan du alltid kontakte din tillitsvalgte for støtte og rådgivning. Denne rollen krever stor innsikt i lovverket og evne til å samarbeide konstruktivt med ulike parter. Den tillitsvalgte skal påse at spillereglene i arbeidslivet følges nøye, og fungerer som en brobygger mellom de ansatte og ledelsen for å skape god dialog og gjensidig forståelse.',
+                text: 'En tillitsvalgt fungerer som de ansattes valgte talsmann og representant på arbeidsplassen. Vedkommende blir valgt demokratisk av de ansatte som er organiserte medlemmer i en fagforening. Den tillitsvalgte har en meget sentral rolle i den løpende dialogen med bedriftens ledelse og deltar aktivt i forhandlinger som gjelder både lønn og generelle arbeidsvilkår. Dersom du som ansatt opplever problemer eller urettferdighet på jobben, som for eksempel diskriminering eller usaklig behandling, kan du alltid kontakte din tillitsvalgte for støtte og rådgivning. Denne rollen krever stor innsikt i lovverket og evne til å samarbeide konstruktivt. Den tillitsvalgte skal påse at spillereglene i arbeidslivet følges nøye, og fungerer som en brobygger mellom de ansatte og ledelsen for å skape god dialog.',
                 tasks: [
-                    { type: 'blank', text: 'En tillitsvalgt blir valgt av de [blank].', answer: 'ansatte' },
-                    { type: 'tf', q: 'Den tillitsvalgte hjelper i konflikter.', answer: true },
-                    { type: 'choice', q: 'Hvem forhandler en tillitsvalgt med?', options: ['Legen', 'Ledelsen', 'Politiet'], correct: 1 },
-                    { type: 'choice', q: 'Hvilken tittel har talsmannen?', options: ['Vikar', 'Tillitsvalgt', 'Lærling'], correct: 1 },
-                    { type: 'choice', q: 'Når kontakter du en tillitsvalgt?', options: ['Når du er sulten', 'Ved problemer på jobb', 'For å kjøpe bil'], correct: 1 }
+                    { type: 'blank', text: 'En tillitsvalgt blir valgt av de [blank] i bedriften.', answer: 'ansatte' },
+                    { type: 'tf', q: 'Den tillitsvalgte har som hovedoppgave å hjelpe i konflikter.', answer: true },
+                    { type: 'choice', q: 'Hvem er den tillitsvalgtes hovedmotpart i forhandlinger?', options: ['Legen', 'Ledelsen i bedriften', 'Politiet'], correct: 1 },
+                    { type: 'choice', q: 'Hvilken av disse titlene beskriver talsmannen for ansatte?', options: ['Vikar', 'Tillitsvalgt', 'Lærling'], correct: 1 },
+                    { type: 'choice', q: 'Når er det mest naturlig å kontakte en tillitsvalgt?', options: ['Når du er sulten', 'Ved faglige problemer på jobb', 'Når du vil kjøpe ny bil'], correct: 1 }
                 ]
             },
             {
                 id: 'b1-t5', title: 'Passiv form', icon: 'zap', color: 'bg-red-200',
-                grammarTheory: 'Passiv brukes når handlingen er viktigere enn hvem som utfører den. Vi har to former: Bli-passiv og S-passiv.',
-                text: 'I formelle tekster, lover og instruksjoner på arbeidsplassen bruker vi svært ofte passiv form i språket vårt. Dette gjøres fordi selve handlingen er viktigere for leseren enn hvem som faktisk utfører den i det aktuelle øyeblikket. Det finnes i hovedsak to måter å danne passiv på i det norske språket. Den første metoden er å bruke hjelpeverbet "bli" sammen med perfektum partisipp av hovedverbet, for eksempel: "Søknaden din blir vurdert". Den andre metoden er å legge til en -s på slutten av selve verbet: "Søknaden vurderes av oss". S-passiv er spesielt utbredt i overskrifter, faste instruksjoner og juridiske lover i arbeidslivet. Ved å bruke passiv form fremstår språket ditt mer objektivt og profesjonelt, noe som forventes i rapporter og e-poster på et B1-nivå i norsk yrkessammenheng og akademisk skriving.',
+                grammarTheory: 'Passiv brukes når handlingen er viktigere enn hvem som utfører den. Vi har to former: Bli-passiv ("Oppgaven blir utført") og S-passiv ("Oppgaven utføres").',
+                text: 'I formelle tekster, lover og instruksjoner på arbeidsplassen bruker vi svært ofte passiv form. Dette gjøres fordi selve handlingen er viktigere for leseren enn hvem som faktisk utfører den i øyeblikket. Det finnes i hovedsak to måter å danne passiv på i det norske språket. Den første metoden er å bruke hjelpeverbet "bli" sammen med perfektum partisipp av hovedverbet, for eksempel: "Søknaden din blir vurdert". Den andre metoden er å legge til en -s på slutten av selve verbet: "Søknaden vurderes av oss". S-passiv er spesielt utbredt i overskrifter, faste instruksjoner og juridiske lover. Ved å bruke passiv form fremstår språket ditt mer objektivt og profesjonelt, noe som forventes i rapporter og e-poster på et B1-nivå i norsk yrkessammenheng.',
                 tasks: [
-                    { type: 'blank', text: 'Aktiv: De vasker gulvet. Passiv: Gulvet [blank] (s-passiv).', answer: 'vaskes' },
-                    { type: 'choice', q: 'Hvilken er bli-passiv?', options: ['Han vasker bilen.', 'Bilen blir vasket.', 'Bilen vasker han.'], correct: 1 },
-                    { type: 'tf', q: '"Kontrakten signeres nå" er en passiv setning.', answer: true },
-                    { type: 'sort-words', q: 'Sett ordene riktig:', sentence: ['Oppgavene', 'skal', 'gjennomføres', 'i', 'dag.'], shuffled: ['gjennomføres', 'skal', 'Oppgavene', 'dag.', 'i'] },
-                    { type: 'choice', q: 'Hvor bruker vi ofte s-passiv?', options: ['I daglig tale', 'I formelle regler', 'Når vi roper'], correct: 1 }
+                    { type: 'blank', text: 'Aktiv: De vasker gulvet. Passiv: Gulvet [blank] (bruk s-passiv).', answer: 'vaskes' },
+                    { type: 'choice', q: 'Hvilken av disse setningene er skrevet i bli-passiv?', options: ['Han vasker bilen.', 'Bilen blir vasket.', 'Bilen vasker han.'], correct: 1 },
+                    { type: 'tf', q: 'Setningen "Kontrakten signeres nå" er en passiv setning.', answer: true },
+                    { type: 'sort-words', q: 'Sett ordene i riktig rekkefølge for denne instruksen:', sentence: ['Oppgavene', 'skal', 'gjennomføres', 'i', 'dag.'], shuffled: ['gjennomføres', 'skal', 'Oppgavene', 'dag.', 'i'] },
+                    { type: 'choice', q: 'Hvor er det mest vanlig å støte på s-passiv?', options: ['I daglig tale', 'I formelle regler og lover', 'Når vi roper til hverandre'], correct: 1 }
                 ]
             },
             {
                 id: 'b1-t6', title: 'Subjunksjoner', icon: 'link', color: 'bg-indigo-200',
-                grammarTheory: 'Subjunksjoner starter leddsetninger. Husk at i leddsetninger kommer "ikke" FØR verbet!',
-                text: 'For å skape logiske sammenhenger og dybde i språket ditt må du bruke subjunksjoner riktig i setningene dine. Dette er små ord som starter leddsetninger og forklarer forholdet mellom to ulike hendelser eller påstander. "Fordi" brukes for å vise årsaken til noe, mens "hvis" viser en betingelse som må oppfylles før noe annet kan skje. En svært viktig regel på B1-nivå er ordstillingen inne i leddsetninger. Her skal adverb som "ikke", "alltid" og "kanskje" stå foran det bøyde verbet i setningen. Eksempel: "Jeg går på jobb selv om jeg ikke føler meg helt frisk i dag". Ved å variere bruken av ulike subjunksjoner kan du forklare komplekse situasjoner mye mer presist for både dine kolleger og dine ledere på arbeidsplassen din hver eneste dag.',
+                grammarTheory: 'Subjunksjoner starter leddsetninger. Eksempler: "fordi", "hvis", "selv om". Husk at i leddsetninger kommer "ikke" og andre adverb FØR verbet!',
+                text: 'For å skape logiske sammenhenger og dybde i språket ditt må du bruke subjunksjoner. Dette er små ord som starter leddsetninger og forklarer forholdet mellom to ulike hendelser eller påstander. "Fordi" brukes for å vise årsaken til noe, mens "hvis" viser en betingelse som må oppfylles før noe annet skjer. En svært viktig regel på B1-nivå er ordstillingen inne i leddsetninger. Her skal adverb som "ikke", "alltid" og "kanskje" stå foran det bøyde verbet. Eksempel: "Jeg går på jobb selv om jeg ikke føler meg helt frisk i dag". Ved å variere bruken av ulike subjunksjoner kan du forklare komplekse situasjoner mye mer presist for både dine kolleger og dine ledere på arbeidsplassen din hver eneste dag.',
                 tasks: [
-                    { type: 'choice', q: 'Hvilken passer? "Jeg kommer ___ jeg er frisk."', options: ['hvis', 'selv om', 'fordi'], correct: 0 },
-                    { type: 'sort-words', q: 'Sett ordene riktig:', sentence: ['fordi', 'han', 'ikke', 'har', 'tid.'], shuffled: ['har', 'ikke', 'fordi', 'han', 'tid.'] },
-                    { type: 'tf', q: 'I leddsetninger kommer "ikke" etter verbet.', answer: false },
-                    { type: 'blank', text: 'Jeg blir hjemme [blank] jeg er syk (årsak).', answer: 'fordi' },
+                    { type: 'choice', q: 'Hvilken subjunksjon passer her? "Jeg kommer på møtet ___ jeg er frisk."', options: ['hvis', 'selv om', 'fordi'], correct: 0 },
+                    { type: 'sort-words', q: 'Sett ordene i riktig rekkefølge for en leddsetning:', sentence: ['fordi', 'han', 'ikke', 'har', 'tid.'], shuffled: ['har', 'ikke', 'fordi', 'han', 'tid.'] },
+                    { type: 'tf', q: 'I norske leddsetninger kommer ordet "ikke" alltid etter verbet.', answer: false },
+                    { type: 'blank', text: 'Jeg blir hjemme [blank] jeg har feber (vis årsak).', answer: 'fordi' },
                     { type: 'choice', q: 'Hvilken funksjon har en subjunksjon?', options: ['Starter et punktum', 'Starter en leddsetning', 'Bøyer et substantiv'], correct: 1 }
                 ]
             },
             {
                 id: 'b1-t7', title: 'Arbeidsmiljøloven', icon: 'shield-check', color: 'bg-yellow-200',
-                text: 'Arbeidsmiljøloven, ofte forkortet til AML, er selve grunnmuren for dine rettigheter som arbeidstaker i det norske arbeidslivet. Lovens hovedformål er å sikre et arbeidsmiljø som gir alle ansatte full trygghet mot både fysiske og psykiske skadevirkninger i løpet av arbeidsdagen. Den inneholder strenge og detaljerte regler for blant annet arbeidstid, pauser, overtidsbetaling og vern mot usaklig oppsigelse eller trakassering på plassen. Loven sier for eksempel at du har krav på minst én pause dersom du jobber mer enn fem og en halv time om dagen. Det er statens eget organ, Arbeidstilsynet, som har ansvaret for å kontrollere at alle bedrifter i hele Norge følger denne viktige loven til punkt og prikke. Som arbeidstaker har du også en medvirkningsplikt på jobben.',
+                text: 'Arbeidsmiljøloven, ofte forkortet til AML, er selve fundamentet for dine rettigheter som arbeidstaker i Norge. Lovens hovedformål er å sikre et arbeidsmiljø som gir alle ansatte full trygghet mot både fysiske og psykiske skadevirkninger i løpet av arbeidsdagen. Den inneholder strenge og detaljerte regler for blant annet arbeidstid, pauser, overtidsbetaling og vern mot usaklig oppsigelse eller trakassering på plassen. Loven sier for eksempel at du har krav på minst én pause dersom du jobber mer enn fem og en halv time om dagen. Det er statens eget organ, Arbeidstilsynet, som har ansvaret for å kontrollere at alle bedrifter i hele Norge følger denne viktige loven til punkt og prikke. Som arbeidstaker har du også en medvirkningsplikt, som betyr at du selv må bidra aktivt.',
                 tasks: [
-                    { type: 'choice', q: 'Hvem kontrollerer AML?', options: ['NAV', 'Arbeidstilsynet', 'Skatteetaten'], correct: 1 },
-                    { type: 'tf', q: 'Loven beskytter bare mot fysisk skader.', answer: false },
-                    { type: 'blank', text: 'Loven gir regler for [blank]betaling.', answer: 'overtids' },
-                    { type: 'choice', q: 'Når har man krav på en pause?', options: ['Etter 2 timer', 'Etter 5,5 timer', 'Etter 8 timer'], correct: 1 },
-                    { type: 'choice', q: 'Hva kalles din plikt til å bidra?', options: ['Lojalitet', 'Medvirkningsplikt', 'Taushetsplikt'], correct: 1 }
+                    { type: 'choice', q: 'Hvem har ansvaret for å kontrollere at AML blir fulgt?', options: ['NAV', 'Arbeidstilsynet', 'Skatteetaten'], correct: 1 },
+                    { type: 'tf', q: 'Loven er laget for å beskytte bare mot fysiske skader.', answer: false },
+                    { type: 'blank', text: 'Loven gir deg rett til betaling for [blank].', answer: 'overtid' },
+                    { type: 'choice', q: 'Når har man krav på en pause ifølge loven?', options: ['Etter 2 timer', 'Etter 5,5 timer', 'Etter 8 timer'], correct: 1 },
+                    { type: 'choice', q: 'Hva kalles din plikt til å bidra til et godt miljø?', options: ['Lojalitet', 'Medvirkningsplikt', 'Taushetsplikt'], correct: 1 }
                 ]
             },
             {
-                id: 'b1-t8', title: 'Nordisk modell', icon: 'globe', color: 'bg-cyan-200',
-                text: 'Den nordiske modellen bygger på et meget tett og tillitsfullt samarbeid mellom tre sentrale parter i samfunnet: staten, arbeidsgiverne og arbeidstakerne. Dette kalles gjerne for trepartssamarbeidet i den norske samfunnsdebatten. Målet med denne unike modellen er å kombinere jevn økonomisk vekst med høy sosial trygghet og relativt små lønnsforskjeller in befolkningen. Hele systemet er avhengig av høy grad av tillit i samfunnet og at en stor andel av de ansatte velger å være fagorganiserte i sine respektive forbund. Gjennom forhandlinger blir man enige om rettferdige regler som gagner alle parter involvert i prosessen. En stor fordel med denne modellen er at den skaper stabilitet og trygghet, selv i tider med økonomisk krise. Det norske arbeidslivet er preget av lite hierarki.',
+                id: 'b1-t8', title: 'Den nordiske modellen', icon: 'globe', color: 'bg-cyan-200',
+                text: 'Den nordiske modellen bygger på et meget tett og tillitsfullt samarbeid mellom tre sentrale parter i samfunnet: staten, arbeidsgiverne og arbeidstakerne. Dette kalles gjerne for trepartssamarbeidet i den norske samfunnsdebatten. Målet med denne unike modellen er å kombinere jevn økonomisk vekst med høy sosial trygghet og relativt små lønnsforskjeller i befolkningen. Hele systemet er avhengig av høy grad av tillit i samfunnet og at en stor andel av de ansatte velger å være fagorganiserte i sine respektive forbund. Gjennom forhandlinger blir man enige om rettferdige regler som gagner alle parter involvert. En stor fordel med denne modellen er at den skaper stabilitet og trygghet, selv i tider med økonomisk krise. Det norske arbeidslivet er preget av lite hierarki, noe som betyr at det er kort vei mellom ansatte og ledere.',
                 tasks: [
-                    { type: 'choice', q: 'Hva kjennetegner modellen?', options: ['Forskjeller', 'Tillit og samarbeid', 'Ingen skatt'], correct: 1 },
-                    { type: 'tf', q: 'Staten er en av de tre partene.', answer: true },
-                    { type: 'choice', q: 'Hva kalles samarbeidet?', options: ['Duo', 'Trepartssamarbeidet', 'Solo'], correct: 1 },
-                    { type: 'blank', text: 'Modellen gir sosial [blank] for alle.', answer: 'trygghet' },
-                    { type: 'choice', q: 'Hva betyr lite hierarki?', options: ['Mange sjefer', 'Kort vei til leder', 'Ingen regler'], correct: 1 }
+                    { type: 'choice', q: 'Hva kjennetegner den nordiske modellen best?', options: ['Store forskjeller', 'Høy tillit og samarbeid', 'Ingen skatter'], correct: 1 },
+                    { type: 'tf', q: 'Staten er en av de tre partene i dette samarbeidet.', answer: true },
+                    { type: 'choice', q: 'Hva kalles samarbeidet mellom staten og partene?', options: ['Duo-modellen', 'Trepartssamarbeidet', 'Solo-avtalen'], correct: 1 },
+                    { type: 'blank', text: 'Modellen gir en høy grad av sosial [blank] for alle.', answer: 'trygghet' },
+                    { type: 'choice', q: 'Hva betyr uttrykket "lite hierarki" i praksis?', options: ['Mange sjefer', 'Kort vei fra ansatt til leder', 'Ingen regler'], correct: 1 }
                 ]
             },
             {
-                id: 'b1-t9', title: 'Kommunikasjon', icon: 'mail', color: 'bg-purple-200',
-                text: 'Profesjonell og formell kommunikasjon er en helt avgjørende kompetanse når du jobber på B1-nivå i det norske arbeidslivet. Når du skal sende e-poster til ledere, viktige kunder eller offentlige kontorer, bør du alltid bruke et saklig og formelt språk for å fremstå profesjonell og ryddig. Dette betyr i praksis at du unngår bruk av slang og forkortelser, og i stedet benytter høflige hilsener og klare setninger. I en jobbsøknad er førsteinntrykket du gir helt avgjørende for om du får komme på intervju, og et korrekt språk viser at du er en seriøs søker. Det er viktig å strukturere alle tekster logisk med en tydelig innledning, en informativ hoveddel og en ryddig avslutning. Å kunne veksle mellom uformell prat i pausen og en formell stil i dokumenter er en stor fordel.',
+                id: 'b1-t9', title: 'Formell kommunikasjon', icon: 'mail', color: 'bg-purple-200',
+                text: 'Profesjonell og formell kommunikasjon er en helt avgjørende kompetanse når du jobber på B1-nivå i Norge. Når du skal sende e-poster til ledere, viktige kunder eller offentlige kontorer, bør du alltid bruke et saklig og formelt språk for å fremstå profesjonell. Dette betyr i praksis at du unngår bruk av slang og forkortelser, og i stedet benytter høflige hilsener og klare setninger. I en jobbsøknad er førsteinntrykket du gir helt avgjørende for om du får komme på intervju, og et korrekt språk viser at du er en seriøs søker. Det er viktig å strukturere alle tekster logisk med en tydelig innledning, en hoveddel og en ryddig avslutning. Å kunne veksle mellom uformell prat i pausen og en formell stil i viktige dokumenter er en stor fordel i arbeidslivet. Husk å sjekke rettskrivingen nøye.',
                 tasks: [
-                    { type: 'choice', q: 'Hva er mest formelt?', options: ['Halla!', 'Hei / Til [Navn]', 'Skjera?'], correct: 1 },
-                    { type: 'tf', q: 'Du bør bruke slang i en jobbsøknad.', answer: false },
-                    { type: 'choice', q: 'Hva betyr "utestående lønn"?', options: ['Lønn ute', 'Lønn du skal få', 'Et lån'], correct: 1 },
-                    { type: 'blank', text: 'Profesjonell kommunikasjon er [blank].', answer: 'viktig' },
-                    { type: 'choice', q: 'Hva er et tegn på seriøsitet?', options: ['Rask skriving', 'Korrekt språk', 'Mye emoji'], correct: 1 }
+                    { type: 'choice', q: 'Hvilken hilsen er mest formelt i en e-post?', options: ['Halla!', 'Hei / Til [Navn]', 'Skjera?'], correct: 1 },
+                    { type: 'tf', q: 'Du bør bruke mye slang når du skriver en jobbsøknad.', answer: false },
+                    { type: 'choice', q: 'Hva betyr uttrykket "utestående lønn" i en melding?', options: ['Lønn utbetalt ute', 'Lønn du har til gode', 'Et lån'], correct: 1 },
+                    { type: 'blank', text: 'Profesjonell kommunikasjon på jobb er meget [blank].', answer: 'viktig' },
+                    { type: 'choice', q: 'Hva er et tydelig tegn på seriøsitet i en tekst?', options: ['Rask skriving', 'Korrekt og feilfritt språk', 'Mange emojier'], correct: 1 }
                 ]
             },
             {
                 id: 'b1-t10', title: 'Yrkesetikk', icon: 'scale', color: 'bg-gray-200',
-                text: 'Yrkesetikk handler om de moralske valgene vi gjør og de normene som gjelder for din spesifikke profesjon i hverdagen på arbeidsplassen din. Det innebærer å følge både skrevne regler og umaskerte forventninger som finnes på arbeidsplassen din. Et helt sentralt begrep i yrkesetikken er taushetsplikt. Dette betyr at du aldri skal dele sensitive opplysninger om bedriftens kunder, pasienter eller kolleger med utenforstående uten samtykke. Yrkesetikk handler også om å være ærlig, pålitelig og rettferdig i møte med alle mennesker du møter gjennom jobben din. Dersom du ser noe kritikkverdig eller ulovlig på jobben, har du rett til å varsle, som betyr å si ifra til riktig instans i firmaet eller til myndighetene. God yrkesetikk bygger nødvendig tillit hos både arbeidsgivere og kunder, og er helt avgjørende for suksess.',
+                text: 'Yrkesetikk handler om de moralske valgene vi gjør og de normene som gjelder for din spesifikke profesjon i hverdagen. Det innebærer å følge både skrevne regler og umaskerte forventninger på arbeidsplassen din. Et helt sentralt begrep i yrkesetikken er taushetsplikt. Dette betyr at du aldri skal dele sensitive opplysninger om bedriftens kunder, pasienter eller kolleger med utenforstående uten samtykke. Yrkesetikk handler også om å være ærlig, pålitelig og rettferdig i møte med alle mennesker du møter gjennom jobben din. Dersom du ser noe kritikkverdig eller ulovlig på jobben, har du rett til å varsle, som betyr å si ifra til riktig instans i firmaet eller myndighetene. God yrkesetikk bygger nødvendig tillit hos både arbeidsgivere og kunder, og er helt avgjørende for bedriftens rykte og suksess.',
                 tasks: [
-                    { type: 'tf', q: 'Taushetsplikt gjelder også etter jobb.', answer: true },
-                    { type: 'choice', q: 'Hva betyr yrkesetikk?', options: ['Jobbe fort', 'Moralske regler for jobben', 'Fine klær'], correct: 1 },
-                    { type: 'choice', q: 'Hva gjør du ved lovbrudd på jobb?', options: ['Ingenting', 'Varsle ledelsen', 'Hjelpe til'], correct: 1 },
-                    { type: 'blank', text: 'Å si ifra kalles å [blank].', answer: 'varsle' },
-                    { type: 'choice', q: 'Hvorfor er taushetsplikt viktig?', options: ['Hemmeligheter er gøy', 'Beskytte personvern', 'Skjule feil'], correct: 1 }
+                    { type: 'tf', q: 'Taushetsplikt gjelder for deg også etter at arbeidsdagen er slutt.', answer: true },
+                    { type: 'choice', q: 'Hva er den beste definisjonen på yrkesetikk?', options: ['Å jobbe fort', 'Moralske regler for yrket', 'Å ha fine klær'], correct: 1 },
+                    { type: 'choice', q: 'Hva bør du gjøre hvis du oppdager lovbrudd på jobb?', options: ['Ingenting', 'Varsle ledelsen', 'Hjelpe til'], correct: 1 },
+                    { type: 'blank', text: 'Å si ifra om kritikkverdige forhold kalles å [blank].', answer: 'varsle' },
+                    { type: 'choice', q: 'Hvorfor er taushetsplikt så viktig?', options: ['Hemmeligheter er gøy', 'Beskytte personvern', 'Skjule egne feil'], correct: 1 }
                 ]
             }
         ];
@@ -321,10 +388,10 @@
             currentTaskIdx: 0,
             score: 0,
             lives: 3,
-            streak: 0,
             sidebarOpen: false,
-            history: JSON.parse(localStorage.getItem('moved_portal_v_final_v12')) || {},
-            taskStartTime: null
+            history: JSON.parse(localStorage.getItem('moved_portal_v_final_html_v3')) || {},
+            taskStartTime: 0,
+            timerInterval: null
         };
 
         // --- HJELPEFUNKSJONER ---
@@ -333,7 +400,7 @@
         }
 
         function save() {
-            localStorage.setItem('moved_portal_v_final_v12', JSON.stringify(state.history));
+            localStorage.setItem('moved_portal_v_final_html_v3', JSON.stringify(state.history));
             updateGlobalScoreUI();
         }
 
@@ -347,12 +414,16 @@
         function updateGlobalScoreUI() {
             let total = 0;
             Object.values(state.history).forEach(h => total += (h.score || 0));
-            const scoreEl = document.getElementById('global-score');
-            if(scoreEl) scoreEl.innerText = total;
+            document.getElementById('global-score').innerText = total;
+            const sidebarScoreEl = document.getElementById('sidebar-total-score');
+            if (sidebarScoreEl) {
+                sidebarScoreEl.innerText = total;
+            }
         }
 
         // --- NAVIGASJON ---
         function setView(v) {
+            clearInterval(state.timerInterval);
             state.view = v;
             if (window.innerWidth < 1024) state.sidebarOpen = false;
             render();
@@ -365,59 +436,56 @@
         }
 
         function goHome() {
+            clearInterval(state.timerInterval);
             state.level = null;
             state.activeTheme = null;
             setView('home');
         }
 
         function goDashboard() {
+            clearInterval(state.timerInterval);
             state.activeTheme = null;
             setView('dashboard');
         }
 
         function startTheme(themeId) {
+            clearInterval(state.timerInterval);
             const list = state.level === 'A2' ? coursesA2 : coursesB1;
             state.activeTheme = list.find(t => t.id === themeId);
             state.currentTaskIdx = 0;
             state.score = 0;
             state.lives = 3;
-            state.streak = 0;
             setView('reading');
         }
 
         // --- OPPGAVELOGIKK ---
         function checkAnswer(isCorrect) {
+            clearInterval(state.timerInterval);
             const overlay = document.getElementById('feedback-overlay');
             overlay.classList.remove('hidden');
             
+            let points = 0;
             if (isCorrect) {
                 const elapsedSeconds = (Date.now() - state.taskStartTime) / 1000;
-                let earnedPoints = 100;
-                if (elapsedSeconds > 0) {
-                    earnedPoints = Math.max(10, 100 - Math.floor(elapsedSeconds * 10));
-                }
-                
-                state.score += earnedPoints;
-                state.streak++;
+                points = Math.max(10, 100 - Math.floor(elapsedSeconds * 10));
+                state.score += points;
                 overlay.className = "absolute inset-0 z-50 flex flex-col items-center justify-center text-center p-10 feedback-correct animate-pop rounded-[4rem]";
                 overlay.innerHTML = `
                     <div class="space-y-6">
                         <i data-lucide="star" class="w-20 h-20 text-yellow-400 mx-auto fill-yellow-400 animate-bounce"></i>
                         <h2 class="text-6xl font-black italic uppercase">Riktig!</h2>
-                        <p class="text-2xl font-bold">+${earnedPoints} poeng</p>
-                        <p class="text-sm opacity-80 font-mono text-white">Tid: ${elapsedSeconds.toFixed(1)} sek</p>
-                        <button onclick="nextTask()" class="mt-8 bg-white text-emerald-900 px-16 py-4 rounded-full font-black text-2xl shadow-xl uppercase">Neste</button>
+                        <p class="text-2xl font-bold">+${points} poeng</p>
+                        <button onclick="nextTask()" class="mt-8 bg-white text-emerald-900 px-16 py-4 rounded-full font-black text-2xl shadow-xl uppercase transition-transform hover:scale-105 active:scale-95">Neste</button>
                     </div>`;
             } else {
                 state.lives--;
-                state.streak = 0;
                 overlay.className = "absolute inset-0 z-50 flex flex-col items-center justify-center text-center p-10 feedback-wrong animate-pop rounded-[4rem]";
                 overlay.innerHTML = `
                     <div class="space-y-6">
                         <i data-lucide="alert-circle" class="w-20 h-20 text-white mx-auto animate-pulse"></i>
                         <h2 class="text-6xl font-black uppercase">Feil...</h2>
-                        <p class="text-xl font-medium">Les teorien på nytt!</p>
-                        <button onclick="nextTask()" class="mt-8 bg-white text-red-900 px-16 py-4 rounded-full font-black text-2xl shadow-xl uppercase">Fortsett</button>
+                        <p class="text-xl font-medium">0 poeng. Prøv å lese teorien på nytt!</p>
+                        <button onclick="nextTask()" class="mt-8 bg-white text-red-900 px-16 py-4 rounded-full font-black text-2xl shadow-xl uppercase transition-transform hover:scale-105 active:scale-95">Fortsett</button>
                     </div>`;
             }
             lucide.createIcons();
@@ -457,6 +525,7 @@
         }
 
         function nextTask() {
+            clearInterval(state.timerInterval);
             if (state.currentTaskIdx < state.activeTheme.tasks.length - 1) {
                 state.currentTaskIdx++;
                 render();
@@ -479,14 +548,18 @@
                 : 'Valg av nivå';
 
             let sbHTML = `
-                <div>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Navigasjon</p>
+                <div class="px-2 py-4">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-2">Total Poengsum</p>
+                    <p id="sidebar-total-score" class="text-5xl font-black text-indigo-600 px-2">0</p>
+                </div>
+                <div class="pt-6 border-t border-slate-100">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 px-4">Navigasjon</p>
                     <div class="space-y-1">
                         <button onclick="goHome()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-100 transition-colors ${state.view === 'home' ? 'nav-active' : ''}">
                             <i data-lucide="home" class="w-4 h-4"></i> Hjem
                         </button>
                         ${state.level ? `
-                        <button onclick="goDashboard()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-100 transition-colors ${state.view === 'dashboard' ? 'nav-active' : ''}">
+                        <button onclick="setView('dashboard')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-100 transition-colors ${state.view === 'dashboard' ? 'nav-active' : ''}">
                             <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashbord ${state.level}
                         </button>` : ''}
                     </div>
@@ -496,30 +569,22 @@
                 const themes = state.level === 'A2' ? coursesA2 : coursesB1;
                 sbHTML += `
                 <div class="pt-6 border-t border-slate-100">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Oppgaver ${state.level}</p>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 px-4">Oppgaver ${state.level}</p>
                     <div class="space-y-1">
                         ${themes.map(t => {
                             const stats = state.history[`${state.level}-${t.id}`];
-                            let p = stats?.completed ? 100 : 0;
-                            if (state.activeTheme?.id === t.id && state.view === 'playing') {
-                                p = Math.max(p, Math.round((state.currentTaskIdx / t.tasks.length) * 100));
-                            }
+                            const scoreText = stats?.score ? `<span class="font-black text-indigo-500">${stats.score}p</span>` : '';
+                            const completedIcon = stats?.completed ? `<i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500"></i>` : `<i data-lucide="circle" class="w-4 h-4 text-slate-300"></i>`;
                             return `
-                                <button onclick="startTheme('${t.id}')" class="w-full text-left px-4 py-3 rounded-xl transition-all ${state.activeTheme?.id === t.id ? 'nav-active' : 'text-slate-500 hover:bg-indigo-50 hover:text-indigo-600'}">
-                                    <div class="flex flex-col gap-1.5">
-                                        <div class="flex justify-between items-center w-full">
-                                            <span class="text-[11px] font-bold leading-tight">${t.title}</span>
-                                            ${stats?.score ? `<span class="text-[9px] font-black text-indigo-600 bg-white px-1.5 py-0.5 rounded shadow-sm">${stats.score}p</span>` : ''}
-                                        </div>
-                                        <div class="flex items-center gap-2">
-                                            <div class="flex-grow bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                                                <div class="bg-indigo-500 h-full transition-all duration-500" style="width: ${p}%"></div>
-                                            </div>
-                                            <span class="text-[9px] font-black opacity-50">${p}%</span>
-                                        </div>
-                                    </div>
-                                </button>
-                            `;
+                            <button onclick="startTheme('${t.id}')" class="w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all ${state.activeTheme?.id === t.id ? 'nav-active' : 'text-slate-500 hover:bg-indigo-50 hover:text-indigo-600'}">
+                                <div class="flex items-center justify-between">
+                                    <span class="flex items-center gap-2.5">
+                                        ${completedIcon}
+                                        <span>${t.title}</span>
+                                    </span>
+                                    ${scoreText}
+                                </div>
+                            </button>`;
                         }).join('')}
                     </div>
                 </div>`;
@@ -540,8 +605,14 @@
 
         function renderHome(root) {
             root.innerHTML = `
-                <div class="flex flex-col items-center justify-center text-center animate-pop space-y-12 py-10">
-                    <div class="bg-white p-10 rounded-[4rem] shadow-2xl inline-block mb-4">
+                <div class="flex flex-col items-center justify-center text-center animate-pop space-y-8 py-10">
+                    
+                    <button onclick="openVideo()" class="bg-white border-2 border-slate-100 text-indigo-600 font-black py-4 px-10 rounded-full text-lg shadow-lg hover:border-indigo-300 transition-all transform hover:scale-105 flex items-center gap-3 group">
+                        <i data-lucide="play-circle" class="w-7 h-7 group-hover:text-indigo-500 transition-colors"></i>
+                        <span class="tracking-wider">INTRODUKSJONSVIDEO</span>
+                    </button>
+
+                    <div class="bg-white p-8 rounded-[4rem] shadow-2xl inline-block">
                         <i data-lucide="graduation-cap" class="w-24 h-24 text-indigo-600"></i>
                     </div>
                     <div class="space-y-4">
@@ -549,14 +620,14 @@
                         <p class="text-slate-500 text-lg max-w-xl mx-auto leading-relaxed font-medium">Interaktiv opplæring i norsk arbeidsliv for nivå A2 og B1.</p>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl pt-6">
-                        <button onclick="selectLevel('A2')" class="bg-white p-12 rounded-[3rem] border-b-[8px] border-slate-200 hover:border-blue-600 hover:-translate-y-2 transition-all shadow-2xl group text-slate-900">
+                        <button onclick="selectLevel('A2')" class="bg-white p-12 rounded-[3rem] border-b-[8px] border-slate-200 hover:border-blue-600 hover:-translate-y-2 transition-all shadow-2xl group">
                             <div class="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6 text-4xl font-black group-hover:scale-110 transition-transform">A2</div>
-                            <h3 class="text-2xl font-black uppercase text-slate-800 font-bold">Nivå A2</h3>
+                            <h3 class="text-2xl font-black uppercase text-slate-800">Nivå A2</h3>
                             <p class="text-slate-400 font-bold mt-2 text-sm">Grunnleggende kunnskap</p>
                         </button>
-                        <button onclick="selectLevel('B1')" class="bg-white p-12 rounded-[3rem] border-b-[8px] border-slate-200 hover:border-emerald-600 hover:-translate-y-2 transition-all shadow-2xl group text-slate-900">
+                        <button onclick="selectLevel('B1')" class="bg-white p-12 rounded-[3rem] border-b-[8px] border-slate-200 hover:border-emerald-600 hover:-translate-y-2 transition-all shadow-2xl group">
                             <div class="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-6 text-4xl font-black group-hover:scale-110 transition-transform">B1</div>
-                            <h3 class="text-2xl font-black uppercase text-slate-800 font-bold">Nivå B1</h3>
+                            <h3 class="text-2xl font-black uppercase text-slate-800">Nivå B1</h3>
                             <p class="text-slate-400 font-bold mt-2 text-sm">Viderekommen forståelse</p>
                         </button>
                     </div>
@@ -569,16 +640,16 @@
             const progress = Math.round((completed / themes.length) * 100);
 
             root.innerHTML = `
-                <div class="space-y-10 animate-pop text-slate-900">
+                <div class="space-y-10 animate-pop">
                     <div class="bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-8">
                         <div class="text-center md:text-left space-y-2">
                             <h1 class="text-4xl font-black text-slate-900 uppercase">Dashboard ${state.level}</h1>
                             <p class="text-slate-500 font-bold">Trykk på et tema for å starte.</p>
                         </div>
                         <div class="bg-indigo-600 px-8 py-6 rounded-[2rem] text-white flex items-center gap-6 shadow-2xl">
-                            <div class="text-right text-white">
+                            <div class="text-right">
                                 <p class="text-[10px] font-black uppercase opacity-70 tracking-widest text-white/80">Fremgang</p>
-                                <p class="text-4xl font-black text-white">${progress}%</p>
+                                <p class="text-4xl font-black">${progress}%</p>
                             </div>
                             <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center text-white"><i data-lucide="medal" class="w-7 h-7"></i></div>
                         </div>
@@ -590,9 +661,9 @@
                                 <button onclick="startTheme('${t.id}')" class="theme-card bg-white p-8 rounded-[2.5rem] border-b-[8px] border-slate-200 hover:border-indigo-600 transition-all text-left flex flex-col min-h-[260px]">
                                     <div class="w-14 h-14 ${t.color} rounded-2xl flex items-center justify-center mb-8 text-slate-800 shadow-sm"><i data-lucide="${t.icon}" class="w-7 h-7"></i></div>
                                     <h3 class="text-xl font-black leading-tight flex-grow text-slate-900">${t.title}</h3>
-                                    <div class="mt-4 pt-4 border-t-2 border-slate-50 flex items-center justify-between text-slate-900">
-                                        ${stats?.completed ? '<span class="text-emerald-600 font-black text-[10px] uppercase flex items-center gap-1 text-emerald-600"><i data-lucide="check" class="w-4 h-4 text-emerald-600"></i> Ferdig</span>' : '<span class="text-slate-400 font-black text-[10px] uppercase tracking-widest">Start nå</span>'}
-                                        ${stats?.score ? `<span class="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-black text-indigo-700">${stats.score}</span>` : ''}
+                                    <div class="mt-4 pt-4 border-t-2 border-slate-50 flex items-center justify-between">
+                                        ${stats?.completed ? '<span class="text-emerald-600 font-black text-[10px] uppercase flex items-center gap-1"><i data-lucide="check" class="w-4 h-4"></i> Ferdig</span>' : '<span class="text-slate-400 font-black text-[10px] uppercase tracking-widest">Start</span>'}
+                                        ${stats?.score ? `<span class="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-black">${stats.score}p</span>` : ''}
                                     </div>
                                 </button>`;
                         }).join('')}
@@ -606,7 +677,7 @@
                 <div class="max-w-3xl mx-auto bg-white rounded-[3rem] shadow-2xl overflow-hidden animate-pop border border-slate-100 text-slate-900">
                     <div class="p-12 ${t.color} flex flex-col items-center text-center">
                         <div class="p-6 bg-white rounded-3xl shadow-lg mb-8"><i data-lucide="${t.icon}" class="w-12 h-12 text-slate-800"></i></div>
-                        <h2 class="text-5xl font-black uppercase tracking-tighter leading-none text-slate-900">${t.title}</h2>
+                        <h2 class="text-5xl font-black uppercase tracking-tighter leading-none">${t.title}</h2>
                     </div>
                     <div class="p-12 space-y-12">
                         <div class="text-xl text-slate-700 font-medium leading-relaxed space-y-6">
@@ -623,10 +694,9 @@
             const t = state.activeTheme;
             const task = t.tasks[state.currentTaskIdx];
             const progress = (state.currentTaskIdx / t.tasks.length) * 100;
-            state.taskStartTime = Date.now();
 
             root.innerHTML = `
-                <div class="max-w-4xl mx-auto space-y-8 animate-pop text-slate-900">
+                <div class="max-w-4xl mx-auto space-y-8 animate-pop">
                     <div class="flex items-center justify-between px-6">
                         <div class="flex gap-2 bg-white p-3 rounded-full shadow-sm border border-slate-100">
                             ${[0,1,2].map(i => `<i data-lucide="heart" class="w-8 h-8 ${i < state.lives ? 'text-red-600 fill-red-600' : 'text-slate-100'}"></i>`).join('')}
@@ -644,17 +714,14 @@
                     </div>` : ''}
 
                     <div class="bg-white rounded-[4rem] p-16 shadow-2xl border border-slate-50 relative overflow-hidden min-h-[550px] flex flex-col justify-center">
+                        <div class="absolute top-0 left-0 w-full h-4 bg-slate-100 rounded-t-[4rem] overflow-hidden">
+                            <div id="time-bar" class="h-full bg-yellow-400 transition-all duration-200" style="width: 100%;"></div>
+                        </div>
                         <div id="feedback-overlay" class="hidden absolute inset-0 z-50 flex flex-col items-center justify-center text-center p-16 rounded-[4rem]"></div>
                         
-                        <div class="mb-10 text-slate-900">
-                            <div class="w-full bg-slate-100 h-3 rounded-full mb-4 overflow-hidden"><div class="bg-indigo-500 h-full transition-all duration-700" style="width: ${progress}%"></div></div>
-                            <div class="flex items-center gap-3 mb-8">
-                                <i data-lucide="clock" class="w-4 h-4 text-slate-400"></i>
-                                <div class="flex-grow bg-slate-100 h-2 rounded-full overflow-hidden">
-                                    <div id="timer-bar" class="timer-progress bg-orange-400 h-full" style="width: 100%"></div>
-                                </div>
-                            </div>
-                            <span class="text-xs font-black text-indigo-400 uppercase tracking-widest block mb-2 font-mono">Oppgave ${state.currentTaskIdx + 1} av ${t.tasks.length}</span>
+                        <div class="mb-10">
+                            <div class="w-full bg-slate-100 h-3 rounded-full mb-8 overflow-hidden"><div class="bg-indigo-500 h-full rounded-full transition-all duration-700" style="width: ${progress}%"></div></div>
+                            <span class="text-xs font-black text-indigo-400 uppercase tracking-widest block mb-2">Oppgave ${state.currentTaskIdx + 1} av ${t.tasks.length}</span>
                             <h3 class="text-4xl font-black leading-tight text-slate-800">${task.q || 'Løs oppgaven:'}</h3>
                         </div>
 
@@ -663,24 +730,22 @@
                         </div>
                     </div>
                 </div>`;
-            lucide.createIcons();
-            startTimerBar();
-        }
 
-        let timerInterval;
-        function startTimerBar() {
-            clearInterval(timerInterval);
-            const bar = document.getElementById('timer-bar');
-            if(!bar) return;
-            const totalDuration = 10000;
-            const step = 100;
-            let elapsed = 0;
-            timerInterval = setInterval(() => {
-                elapsed += step;
-                const remainingPercent = Math.max(0, 100 - (elapsed / totalDuration) * 100);
-                bar.style.width = remainingPercent + '%';
-                if (elapsed >= totalDuration) clearInterval(timerInterval);
-            }, step);
+            clearInterval(state.timerInterval);
+            state.taskStartTime = Date.now();
+            state.timerInterval = setInterval(() => {
+                const elapsedSeconds = (Date.now() - state.taskStartTime) / 1000;
+                const width = Math.max(0, 100 - (elapsedSeconds * 10));
+                const timeBar = document.getElementById('time-bar');
+                if (timeBar) {
+                    timeBar.style.width = `${width}%`;
+                }
+                if (width <= 0) {
+                    clearInterval(state.timerInterval);
+                }
+            }, 100);
+
+            lucide.createIcons();
         }
 
         function renderTaskUI(task) {
@@ -694,23 +759,19 @@
             if (task.type === 'tf') {
                 return `
                     <div class="grid grid-cols-2 gap-6 pt-6">
-                        <button onclick="checkAnswer(${task.answer === true})" class="p-16 border-4 border-emerald-100 bg-emerald-50 text-emerald-700 rounded-[3rem] font-black text-4xl hover:bg-emerald-100 uppercase active:scale-95 transition-all text-emerald-700">RETT</button>
-                        <button onclick="checkAnswer(${task.answer === false})" class="p-16 border-4 border-red-100 bg-red-50 text-red-700 rounded-[3rem] font-black text-4xl hover:bg-red-100 uppercase active:scale-95 transition-all text-red-700">GALT</button>
+                        <button onclick="checkAnswer(${task.answer === true})" class="p-16 border-4 border-emerald-100 bg-emerald-50 text-emerald-700 rounded-[3rem] font-black text-4xl hover:bg-emerald-100 uppercase active:scale-95 transition-all">RETT</button>
+                        <button onclick="checkAnswer(${task.answer === false})" class="p-16 border-4 border-red-100 bg-red-50 text-red-700 rounded-[3rem] font-black text-4xl hover:bg-red-100 uppercase active:scale-95 transition-all">GALT</button>
                     </div>`;
             }
             if (task.type === 'blank') {
                 return `
                     <div class="space-y-8">
-                        <div class="p-10 bg-slate-50 rounded-[2rem] text-center font-bold text-slate-800 italic text-2xl leading-relaxed text-slate-900">
-                            "${task.text.replace('[blank]', '<span class="text-indigo-600 underline font-black">_______</span>')}"
+                        <div class="p-10 bg-slate-50 rounded-[2rem] text-center font-bold text-slate-800 italic text-2xl leading-relaxed">
+                            "${task.text.replace('[blank]', '<span class="text-indigo-600 underline">_______</span>')}"
                         </div>
                         <div class="flex flex-col gap-4">
-                            <input id="blank-input" type="text" autocapitalize="none" spellcheck="false" 
-                                class="w-full p-6 border-4 border-slate-200 rounded-3xl outline-none text-4xl font-black text-center focus:border-indigo-600 transition-colors text-slate-900 shadow-sm" 
-                                placeholder="Skriv her..." 
-                                oninput="this.value = this.value.toLowerCase()"
-                                onkeypress="if(event.key==='Enter') checkBlank()">
-                            <button onclick="checkBlank()" class="w-full py-6 bg-indigo-600 text-white rounded-3xl font-black text-2xl shadow-xl uppercase transition-all hover:bg-indigo-700 active:scale-95 text-white">Sjekk svar</button>
+                            <input id="blank-input" type="text" autocapitalize="none" spellcheck="false" class="w-full p-6 border-4 border-slate-200 rounded-3xl outline-none text-4xl font-black text-center focus:border-indigo-600 transition-colors text-slate-900" placeholder="Skriv her..." onkeypress="if(event.key==='Enter') checkBlank()">
+                            <button onclick="checkBlank()" class="w-full py-6 bg-indigo-600 text-white rounded-3xl font-black text-2xl shadow-xl uppercase transition-all hover:bg-indigo-700">Sjekk svar</button>
                         </div>
                     </div>`;
             }
@@ -719,9 +780,9 @@
                 return `
                     <div class="space-y-4">
                         ${task.pairs.map((p, i) => `
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                                <div class="p-5 bg-slate-900 text-white rounded-2xl font-black text-center text-lg text-white">${p.word}</div>
-                                <select id="drag-${i}" class="p-5 border-4 border-dashed border-slate-200 rounded-2xl font-bold text-slate-500 outline-none focus:border-indigo-500 bg-slate-50 appearance-none shadow-sm text-slate-900">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center text-slate-900">
+                                <div class="p-5 bg-slate-900 text-white rounded-2xl font-black text-center text-lg">${p.word}</div>
+                                <select id="drag-${i}" class="p-5 border-4 border-dashed border-slate-200 rounded-2xl font-bold text-slate-500 outline-none focus:border-indigo-500 bg-slate-50 appearance-none text-slate-900">
                                     <option value="">Velg...</option>
                                     ${shuffled.map(def => `<option value="${def}">${def}</option>`).join('')}
                                 </select>
@@ -736,41 +797,41 @@
                         <div class="flex flex-wrap gap-4 justify-center">
                             ${task.shuffled.map((w, i) => `<button onclick="handleSortClick('${w.replace(/'/g, "\\'")}', this)" class="px-8 py-4 bg-white border-2 border-slate-200 rounded-2xl font-black text-xl hover:border-indigo-500 shadow-sm transition-all text-slate-900">${w}</button>`).join('')}
                         </div>
-                        <button onclick="checkSort()" class="w-full py-6 bg-indigo-600 text-white rounded-3xl font-black text-2xl uppercase transition-all active:scale-95 shadow-xl">Ferdig</button>
+                        <button onclick="checkSort()" class="w-full py-6 bg-indigo-600 text-white rounded-3xl font-black text-2xl uppercase transition-all active:scale-95">Ferdig</button>
                     </div>`;
             }
             return '';
         }
 
         function renderSummary(root, isGameOver) {
-            clearInterval(timerInterval);
             const t = state.activeTheme;
             root.innerHTML = `
                 <div class="max-w-2xl mx-auto bg-white rounded-[5rem] p-20 shadow-2xl space-y-12 border-4 border-slate-50 animate-pop text-center text-slate-900">
-                    <div class="w-40 h-40 ${isGameOver ? 'bg-red-100 text-red-600' : 'bg-yellow-50 text-yellow-500'} rounded-[3rem] flex items-center justify-center mx-auto shadow-inner text-slate-900">
-                        <i data-lucide="${isGameOver ? 'frown' : 'award'}" class="w-24 h-24 text-slate-900"></i>
+                    <div class="w-40 h-40 ${isGameOver ? 'bg-red-100 text-red-600' : 'bg-yellow-50 text-yellow-500'} rounded-[3rem] flex items-center justify-center mx-auto shadow-inner">
+                        <i data-lucide="${isGameOver ? 'frown' : 'award'}" class="w-24 h-24"></i>
                     </div>
                     <div>
-                        <h2 class="text-7xl font-black mb-4 tracking-tighter uppercase leading-none text-slate-900">${isGameOver ? 'Uff da!' : 'Fullført!'}</h2>
-                        <p class="text-slate-400 font-bold text-2xl text-slate-900">${isGameOver ? 'Du gikk tom for liv. Prøv igjen!' : `Gratulerer, du har mestre modulen!`}</p>
+                        <h2 class="text-7xl font-black mb-4 tracking-tighter uppercase leading-none">${isGameOver ? 'Uff da!' : 'Ferdig!'}</h2>
+                        <p class="text-slate-400 font-bold text-2xl">${isGameOver ? 'Du gikk tom for liv. Prøv igjen!' : `Gratulerer, du har fullført denne modulen!`}</p>
                     </div>
-                    <div class="grid grid-cols-2 gap-8 text-slate-900">
-                        <div class="bg-slate-50 p-10 rounded-[3rem] border-2 border-slate-100"><p class="text-xs font-black text-slate-400 uppercase mb-2 text-slate-900">Modul Score</p><p class="text-5xl font-black text-indigo-600">${state.score}</p></div>
-                        <div class="bg-slate-50 p-10 rounded-[3rem] border-2 border-slate-100"><p class="text-xs font-black text-slate-400 uppercase mb-2 text-slate-900">Liv igjen</p><p class="text-5xl font-black text-emerald-600">${state.lives}</p></div>
+                    <div class="grid grid-cols-2 gap-8">
+                        <div class="bg-slate-50 p-10 rounded-[3rem] border-2 border-slate-100"><p class="text-xs font-black text-slate-400 uppercase mb-2">Poeng</p><p class="text-5xl font-black text-indigo-600">${state.score}</p></div>
+                        <div class="bg-slate-50 p-10 rounded-[3rem] border-2 border-slate-100"><p class="text-xs font-black text-slate-400 uppercase mb-2">Liv igjen</p><p class="text-5xl font-black text-emerald-600">${state.lives}</p></div>
                     </div>
                     <div class="space-y-4">
-                        <button onclick="startTheme('${t.id}')" class="w-full py-8 ${isGameOver ? 'bg-red-600' : 'bg-emerald-600'} text-white rounded-[3rem] font-black text-3xl shadow-xl hover:scale-105 transition-transform uppercase active:scale-95 text-white">PRØV IGJEN</button>
-                        <button onclick="setView('dashboard')" class="w-full py-6 bg-slate-100 text-slate-500 rounded-[2.5rem] font-black text-xl hover:bg-slate-200 transition-all uppercase text-slate-900">Dashboard</button>
+                        <button onclick="startTheme('${t.id}')" class="w-full py-8 ${isGameOver ? 'bg-red-600' : 'bg-emerald-600'} text-white rounded-[3rem] font-black text-3xl shadow-xl hover:scale-105 transition-transform uppercase active:scale-95">PRØV IGJEN</button>
+                        <button onclick="setView('dashboard')" class="w-full py-6 bg-slate-100 text-slate-500 rounded-[2.5rem] font-black text-xl hover:bg-slate-200 transition-all uppercase">Dashboard</button>
                     </div>
                 </div>`;
         }
 
+        // --- INIT ---
         window.onload = () => {
             render();
             if (window.innerWidth >= 1024) {
                 state.sidebarOpen = true;
                 const sb = document.getElementById('sidebar');
-                if(sb) sb.classList.remove('sidebar-closed');
+                sb.classList.remove('sidebar-closed');
             }
         };
     </script>
